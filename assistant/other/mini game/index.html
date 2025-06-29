@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پازل نت | دنیای معما و سرگرمی</title>
+    
+    <!-- Chosen Palette: Calm Neutral -->
+    <!-- Application Structure Plan: The SPA is designed as an interactive dashboard. It starts with a "Puzzle of the Day" hero section for immediate engagement. The core is a filterable grid of puzzles, allowing users to explore by category (Logic, Math, etc.), which is more interactive than a static list. A "Your Performance" section with a Chart.js doughnut chart is included to visualize user activity (simulated), adding a modern, data-driven feel. Sections for articles and an "about" summary complete the experience. This task-oriented flow (solve, explore, learn) was chosen for maximum user engagement and usability over a simple linear presentation of the source content. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Puzzles of different types. Goal: Allow user exploration. Viz/Method: Interactive filterable grid (HTML/CSS/JS). Interaction: Click category buttons to dynamically filter the puzzle grid. Justification: Empowers user choice and provides a dynamic experience.
+        - Report Info: User solving puzzles. Goal: Visualize user activity. Viz/Method: Doughnut Chart (Chart.js/Canvas). Interaction: Hover for tooltips showing solved counts. Justification: Fulfills the dashboard concept and data visualization requirement.
+        - Report Info: Puzzle with a question and an answer. Goal: Create an engaging reveal. Viz/Method: Modal pop-up (HTML/CSS/JS). Interaction: Click a button to open a modal with the puzzle, then another click to reveal the answer. Justification: Creates a focused, step-by-step solving experience.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f8f7f2; /* Warm Neutral Background */
+            color: #4a4a4a;
+        }
+        .brand-gradient {
+            background: linear-gradient(to right, #6d5b97, #b8a9c9); /* A calm, puzzle-like purple gradient */
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        .filter-btn {
+            transition: all 0.3s ease;
+        }
+        .filter-btn.active {
+            background-color: #6d5b97;
+            color: white;
+            box-shadow: 0 2px 5px rgba(109, 91, 151, 0.3);
+        }
+        .modal {
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            transition: transform 0.3s ease;
+        }
+        .answer-reveal {
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-40 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 brand-gradient rounded-lg flex items-center justify-center text-white font-bold text-xl">پ</div>
+                <h1 class="text-2xl font-bold text-gray-800">پازل نت</h1>
+            </div>
+            <div class="hidden md:flex items-center space-x-8 space-x-reverse">
+                <a href="#puzzle-of-the-day" class="text-gray-600 hover:text-gray-900">پازل روز</a>
+                <a href="#explore" class="text-gray-600 hover:text-gray-900">کاوش</a>
+                <a href="#performance" class="text-gray-600 hover:text-gray-900">عملکرد</a>
+                <a href="#articles" class="text-gray-600 hover:text-gray-900">مقالات</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <!-- Puzzle of the Day Section -->
+        <section id="puzzle-of-the-day" class="text-center mb-20 pt-8">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">پازل امروز</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto mb-8">هر روز یک چالش جدید برای ذهن شما. آماده‌ای؟</p>
+            <div id="daily-puzzle-container" class="card max-w-2xl mx-auto p-8 text-right">
+                <!-- Daily puzzle will be loaded here by JS -->
+            </div>
+        </section>
+
+        <!-- Explore Section -->
+        <section id="explore" class="mb-20 pt-8">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">کاوش در دنیای پازل‌ها</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto text-center mb-8">بر اساس علاقه خود، دسته‌بندی مورد نظر را انتخاب کرده و شروع به حل کردن کنید.</p>
+            
+            <!-- Filter Buttons -->
+            <div id="filter-container" class="flex flex-wrap justify-center gap-3 mb-10">
+                <button class="filter-btn active bg-white px-5 py-2 rounded-full shadow-sm font-medium" data-filter="all">همه</button>
+                <button class="filter-btn bg-white px-5 py-2 rounded-full shadow-sm font-medium" data-filter="logic">منطقی</button>
+                <button class="filter-btn bg-white px-5 py-2 rounded-full shadow-sm font-medium" data-filter="math">ریاضی</button>
+                <button class="filter-btn bg-white px-5 py-2 rounded-full shadow-sm font-medium" data-filter="visual">تصویری</button>
+            </div>
+
+            <!-- Puzzle Grid -->
+            <div id="puzzle-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Puzzle cards will be loaded here by JS -->
+            </div>
+        </section>
+
+        <!-- Performance Section -->
+        <section id="performance" class="mb-20 pt-8">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">عملکرد شما</h2>
+             <p class="text-gray-600 max-w-2xl mx-auto text-center mb-8">در یک نسخه کامل، می‌توانید آمار پازل‌های حل شده خود را اینجا ببینید. این یک نمونه نمایشی است.</p>
+            <div class="card p-6 md:p-8 max-w-2xl mx-auto">
+                <h3 class="text-xl font-bold mb-6 text-center">انواع پازل‌های حل شده</h3>
+                <div class="chart-container relative h-80 md:h-96 w-full max-w-md mx-auto">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Articles Section -->
+        <section id="articles" class="mb-12 pt-8">
+             <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">از دنیای معماها بیشتر بدانید</h2>
+             <p class="text-gray-600 max-w-2xl mx-auto text-center mb-8">مقالاتی برای تقویت مهارت‌های حل مسئله و آشنایی با تاریخچه سرگرمی‌های فکری.</p>
+             <div id="articles-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <!-- Article cards will be loaded here by JS -->
+             </div>
+        </section>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-100 border-t border-gray-200">
+        <div class="container mx-auto px-6 py-8 text-center text-gray-600">
+            <p>&copy; 1403 - پازل نت. تمام حقوق محفوظ است.</p>
+            <p class="text-sm mt-2">طراحی و توسعه با عشق برای ذهن‌های کنجکاو.</p>
+        </div>
+    </footer>
+
+    <!-- Modal -->
+    <div id="puzzle-modal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 opacity-0 pointer-events-none">
+        <div id="modal-content" class="modal-content card max-w-lg w-full p-8 relative transform scale-95">
+            <button id="close-modal" class="absolute top-4 left-4 text-gray-400 hover:text-gray-800 text-3xl">&times;</button>
+            <div id="modal-body" class="text-right">
+                <!-- Modal content will be loaded here by JS -->
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        
+        // --- DATA ---
+        const puzzles = [
+            { id: 1, title: "معمای دو نگهبان", category: "logic", question: "شما در مقابل دو در و دو نگهبان قرار دارید. یکی از درها به آزادی و دیگری به نابودی می‌رسد. یکی از نگهبانان همیشه راست می‌گوید و دیگری همیشه دروغ. شما با پرسیدن تنها یک سوال از تنها یکی از نگهبانان، چگونه راه آزادی را پیدا می‌کنید؟", answer: "از یکی از نگهبانان می‌پرسید: «اگر از نگهبان دیگر بپرسم کدام در به آزادی می‌رسد، او کدام در را نشان می‌دهد؟» سپس دری را انتخاب می‌کنید که او نشان نداده است." },
+            { id: 2, title: "سن فرزندان", category: "math", question: "مردی سه فرزند دارد. حاصل‌ضرب سن آن‌ها ۷۲ و حاصل‌جمع سن آن‌ها برابر با شماره پلاک خانه‌اش است. بزرگترین فرزند او به کلاس پیانو می‌رود. سن فرزندان او چند است؟", answer: "۳، ۶ و ۱۲. نکته کلیدی در «بزرگترین فرزند» است که حالت‌های مشابه (مانند ۲، ۶، ۶) را حذف می‌کند." },
+            { id: 3, title: "عبور از رودخانه", category: "logic", question: "یک کشاورز می‌خواهد یک گرگ، یک گوسفند و یک بسته کلم را از رودخانه عبور دهد. قایق او به جز خودش، تنها برای حمل یکی از آن‌ها جا دارد. اگر گرگ و گوسفند تنها بمانند، گرگ گوسفند را می‌خورد. اگر گوسفند و کلم تنها بمانند، گوسفند کلم را می‌خورد. کشاورز چگونه همه را به سلامت به آن سوی رودخانه می‌برد؟", answer: "۱. گوسفند را می‌برد. ۲. برمی‌گردد. ۳. گرگ را می‌برد. ۴. با گوسفند برمی‌گردد. ۵. کلم را می‌برد. ۶. برمی‌گردد. ۷. گوسفند را می‌برد." },
+            { id: 4, title: "۹ نقطه", category: "visual", question: "چگونه می‌توانید ۹ نقطه که در یک مربع ۳x۳ قرار دارند را با ۴ خط مستقیم و بدون برداشتن قلم از روی کاغذ به هم وصل کنید؟", answer: "باید از مرزهای فرضی مربع نقطه‌ها خارج شوید. خطوط را طوری رسم کنید که از محدوده نقطه‌ها فراتر روند." },
+            { id: 5, title: "مجموع اعداد", category: "math", question: "مجموع اعداد از ۱ تا ۱۰۰ چند می‌شود؟", answer: "۵۰۵۰. با استفاده از فرمول (n * (n + 1)) / 2 که در آن n=100 است. یا با جمع کردن جفت‌ها: (۱+۱۰۰)، (۲+۹۹)، ... که ۵۰ جفت ۱۰۱ تایی می‌شود." },
+            { id: 6, title: "کدام ظرف؟", category: "visual", question: "اگر یک شیر آب را باز کنید، کدام یک از هفت ظرف متصل به هم، زودتر از بقیه پر می‌شود؟ (نیاز به تصویر دارد - این یک نمونه متنی است).", answer: "جواب بستگی به تصویر و محل لوله‌های اتصال دارد. معمولاً ظرفی که در پایین‌ترین سطح قرار دارد و ورودی آن مسدود نیست، اول پر می‌شود." }
+        ];
+
+        const articles = [
+            { title: "تاریخچه سودوکو", summary: "سودوکو، که امروزه یکی از محبوب‌ترین پازل‌های منطقی جهان است، ریشه‌هایی عمیق‌تر از آنچه فکر می‌کنید دارد..." },
+            { title: "چگونه مانند شرلوک هلمز فکر کنیم؟", summary: "تفکر استنتاجی یکی از کلیدی‌ترین مهارت‌ها برای حل معماهای پیچیده است. در این مقاله یاد می‌گیریم..." }
+        ];
+
+        const dailyPuzzle = puzzles[0];
+
+        // --- DOM Elements ---
+        const puzzleGrid = document.getElementById('puzzle-grid');
+        const filterContainer = document.getElementById('filter-container');
+        const articlesContainer = document.getElementById('articles-container');
+        const dailyPuzzleContainer = document.getElementById('daily-puzzle-container');
+        
+        // Modal elements
+        const modal = document.getElementById('puzzle-modal');
+        const modalContent = document.getElementById('modal-content');
+        const modalBody = document.getElementById('modal-body');
+        const closeModalBtn = document.getElementById('close-modal');
+
+        // --- Functions ---
+        
+        function createPuzzleCard(puzzle) {
+            const card = document.createElement('div');
+            card.className = 'card p-6 text-right flex flex-col';
+            card.innerHTML = `
+                <h3 class="text-xl font-bold mb-3">${puzzle.title}</h3>
+                <p class="text-gray-600 mb-6 flex-grow">${puzzle.question.substring(0, 80)}...</p>
+                <button class="solve-btn brand-gradient text-white font-bold py-2 px-4 rounded-lg w-full mt-auto" data-id="${puzzle.id}">حل کن!</button>
+            `;
+            return card;
+        }
+
+        function displayPuzzles(filter = 'all') {
+            puzzleGrid.innerHTML = '';
+            const filteredPuzzles = filter === 'all' ? puzzles : puzzles.filter(p => p.category === filter);
+            filteredPuzzles.forEach(puzzle => {
+                const card = createPuzzleCard(puzzle);
+                puzzleGrid.appendChild(card);
+            });
+        }
+        
+        function openModal(puzzle) {
+            modalBody.innerHTML = `
+                <h3 class="text-2xl font-bold mb-4">${puzzle.title}</h3>
+                <p class="text-gray-700 mb-6 text-lg leading-relaxed">${puzzle.question}</p>
+                <button id="reveal-answer-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">نمایش پاسخ</button>
+                <div id="answer-container" class="answer-reveal max-h-0 opacity-0 overflow-hidden mt-4">
+                     <p class="bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg">${puzzle.answer}</p>
+                </div>
+            `;
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modalContent.classList.remove('scale-95');
+            
+            document.getElementById('reveal-answer-btn').addEventListener('click', function() {
+                const answerContainer = document.getElementById('answer-container');
+                answerContainer.classList.remove('max-h-0', 'opacity-0');
+                answerContainer.style.maxHeight = answerContainer.scrollHeight + "px";
+                answerContainer.style.opacity = 1;
+                this.style.display = 'none';
+            });
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modalContent.classList.add('scale-95');
+        }
+
+        // --- Event Listeners ---
+        
+        filterContainer.addEventListener('click', function(e) {
+            if (e.target.tagName === 'BUTTON') {
+                document.querySelector('.filter-btn.active').classList.remove('active');
+                e.target.classList.add('active');
+                displayPuzzles(e.target.dataset.filter);
+            }
+        });
+        
+        puzzleGrid.addEventListener('click', function(e) {
+            if (e.target.classList.contains('solve-btn')) {
+                const puzzleId = parseInt(e.target.dataset.id);
+                const puzzle = puzzles.find(p => p.id === puzzleId);
+                openModal(puzzle);
+            }
+        });
+
+        closeModalBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // --- Initial Load ---
+        
+        // Load Daily Puzzle
+        dailyPuzzleContainer.innerHTML = `
+            <h3 class="text-2xl font-bold mb-3">${dailyPuzzle.title}</h3>
+            <p class="text-gray-600 mb-6 text-lg">${dailyPuzzle.question}</p>
+            <button class="solve-btn brand-gradient text-white font-bold py-3 px-6 rounded-lg text-lg" data-id="${dailyPuzzle.id}">شروع به حل کردن</button>
+        `;
+        dailyPuzzleContainer.querySelector('.solve-btn').addEventListener('click', function() {
+             const puzzleId = parseInt(this.dataset.id);
+             const puzzle = puzzles.find(p => p.id === puzzleId);
+             openModal(puzzle);
+        });
+
+        // Load all puzzles initially
+        displayPuzzles();
+
+        // Load Articles
+        articles.forEach(article => {
+            const articleCard = document.createElement('div');
+            articleCard.className = 'card p-6 text-right';
+            articleCard.innerHTML = `
+                <h3 class="text-xl font-bold mb-3">${article.title}</h3>
+                <p class="text-gray-600">${article.summary}</p>
+            `;
+            articlesContainer.appendChild(articleCard);
+        });
+
+        // Load Chart
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['منطقی', 'ریاضی', 'تصویری'],
+                datasets: [{
+                    label: 'پازل‌های حل شده',
+                    data: [12, 19, 5],
+                    backgroundColor: [
+                        'rgba(109, 91, 151, 0.7)',
+                        'rgba(184, 169, 201, 0.7)',
+                        'rgba(159, 143, 182, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(109, 91, 151, 1)',
+                        'rgba(184, 169, 201, 1)',
+                        'rgba(159, 143, 182, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                family: "'Vazirmatn', sans-serif",
+                                size: 14
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+    </script>
+</body>
+</html>
